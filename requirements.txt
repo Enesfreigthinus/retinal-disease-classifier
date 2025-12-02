@@ -23,7 +23,7 @@ tabulate>=0.9.0
 jupyter>=1.0.0
 ipykernel>=6.0.0
 
-# Optional: Google Colab support (uncomment if using Colab)
+# Optional: Google Colab support
 # google-colab
 
 # Development
