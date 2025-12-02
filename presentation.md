@@ -68,34 +68,175 @@
 
 ## 3. Model Mimarisi
 
-### Söylenebilecekler:
+> **Toplam Slide Sayısı: 4 Slide**
 
-- **Backbone**: ConvNeXt-Tiny
-  - 2022'de Facebook tarafından geliştirilen modern CNN mimarisi
-  - ImageNet üzerinde önceden eğitilmiş ağırlıklar (transfer learning)
-  - ResNet'in tasarım prensiplerini Vision Transformer'larla modernize ediyor
-- **Transfer Learning Avantajları**:
-  - Düşük veri miktarıyla yüksek performans
-  - Genel görsel özellikler zaten öğrenilmiş
-  - Daha hızlı yakınsama
-- **Classifier Katmanı**: Son katman 43 çıkışlı linear layer ile değiştirildi
-- **Multi-label Çıkış**: Her sınıf için bağımsız sigmoid aktivasyonu
+---
 
-### Model Parametreleri:
+### 📌 Slide 3.1: Neden ConvNeXt?
 
-- Toplam parametre: ~28 milyon
-- Eğitilebilir parametre: Tüm ağ (discriminative learning rate ile)
+#### Slide İçeriği:
 
-### Desteklenen Alternatif Modeller (ModelFactory):
+- Başlık: "Model Seçimi: Neden ConvNeXt-Tiny?"
+- Alt başlık: "Modern CNN vs Geleneksel Yaklaşımlar"
 
-- ConvNeXt-Small, ConvNeXt-Base
-- ResNet50, ResNet101
-- EfficientNet-B0, EfficientNet-B3
+#### Görseller:
 
-### Gösterilebilecek Görseller:
+- CNN mimarilerinin kronolojik gelişimi görseli (AlexNet → VGG → ResNet → EfficientNet → ConvNeXt)
+- ConvNeXt vs ResNet vs ViT performans karşılaştırma tablosu (ImageNet sonuçları)
 
-- ConvNeXt mimarisi şeması
-- Model özet tablosu (parametre sayıları)
+#### Anlatım Metni:
+
+> "Model seçiminde neden ConvNeXt-Tiny'ı tercih ettik? ConvNeXt, 2022 yılında Facebook AI Research (Meta) tarafından geliştirilmiş ve 'A ConvNet for the 2020s' başlıklı makale ile tanıtılmıştır.
+>
+> ConvNeXt'in özelliği, Vision Transformer'ların başarısından sonra CNN mimarilerinin hâlâ rekabetçi olabileceğini göstermesidir. Araştırmacılar, ResNet mimarisini modern tasarım prensipleriyle güncellemiş ve ViT ile karşılaştırılabilir performans elde etmişlerdir.
+>
+> Bizim projemiz için ConvNeXt-Tiny ideal çünkü:
+>
+> - Görece küçük model boyutu (~28M parametre) ile yüksek performans sunar
+> - Transfer learning için optimize edilmiştir
+> - Tıbbi görüntü analizinde CNN'ler hâlâ çok etkilidir"
+
+---
+
+### 📌 Slide 3.2: ConvNeXt Mimarisi Detayları
+
+#### Slide İçeriği:
+
+- Başlık: "ConvNeXt-Tiny Mimari Yapısı"
+- ConvNeXt bloğu şeması
+- Katman detayları tablosu
+
+#### Görseller:
+
+- ConvNeXt block diyagramı (Depthwise Conv → LayerNorm → 1x1 Conv → GELU → 1x1 Conv)
+- Stage yapısı görseli (4 stage: 96→192→384→768 kanal)
+
+#### Tablo (Slide'a eklenecek):
+
+| Stage   | Çıkış Boyutu | Kanal Sayısı | Blok Sayısı |
+| ------- | ------------ | ------------ | ----------- |
+| Stem    | 56×56        | 96           | 1           |
+| Stage 1 | 56×56        | 96           | 3           |
+| Stage 2 | 28×28        | 192          | 3           |
+| Stage 3 | 14×14        | 384          | 9           |
+| Stage 4 | 7×7          | 768          | 3           |
+
+#### Anlatım Metni:
+
+> "ConvNeXt mimarisine daha yakından bakalım. Mimari 4 ana stage'den oluşur ve her stage'de özellik haritalarının boyutu yarıya inerken kanal sayısı iki katına çıkar.
+>
+> ConvNeXt bloğunun temel bileşenleri:
+>
+> 1. **Depthwise Convolution (7×7)**: Her kanal için ayrı konvolüsyon, hesaplama verimliliği sağlar
+> 2. **Layer Normalization**: Batch Norm yerine, daha stabil eğitim
+> 3. **Pointwise Convolutions (1×1)**: Kanal etkileşimlerini öğrenir
+> 4. **GELU Aktivasyonu**: ReLU'dan daha yumuşak, modern transformerlarda kullanılan aktivasyon
+> 5. **Inverted Bottleneck**: Dar→Geniş→Dar yapısı, parametre verimliliği
+>
+> Bu tasarım, ViT'in başarılı özelliklerini CNN'e adapte eder. Örneğin, büyük kernel boyutu (7×7), transformer'daki geniş attention window'a karşılık gelir."
+
+---
+
+### 📌 Slide 3.3: Transfer Learning ve Fine-Tuning
+
+#### Slide İçeriği:
+
+- Başlık: "Transfer Learning Stratejimiz"
+- Transfer learning akış diyagramı
+- ImageNet pretraining açıklaması
+
+#### Görseller:
+
+- Transfer learning konsept görseli (ImageNet → Retinal Disease)
+- Feature extractor + Classifier ayrımı görseli
+- Discriminative Learning Rate grafiği
+
+#### Anlatım Metni:
+
+> "Projemizde transfer learning kullanıyoruz. Peki bu ne anlama geliyor?
+>
+> ConvNeXt-Tiny modeli önce ImageNet veri seti üzerinde eğitilmiş. ImageNet, 1.2 milyon görüntü ve 1000 sınıf içerir. Bu eğitim sırasında model:
+>
+> - Kenar, köşe, doku gibi düşük seviyeli özellikler
+> - Şekil, pattern gibi orta seviyeli özellikler
+> - Nesne parçaları gibi yüksek seviyeli özellikler öğrenmiştir.
+>
+> Bu öğrenilmiş özellikler retinal görüntüler için de geçerlidir! Damarlar, lekeler, renk değişimleri benzer düşük-orta seviye özelliklerdir.
+>
+> **Discriminative Fine-Tuning** stratejimiz:
+>
+> - Feature Extractor katmanları: Düşük learning rate (2e-4) → Öğrenilmiş özellikleri korur
+> - Classifier katmanı: Yüksek learning rate (2e-3) → Yeni göreve hızla adapte olur
+>
+> Bu sayede hem pretrained bilgiyi korur hem de yeni göreve uyum sağlarız."
+
+---
+
+### 📌 Slide 3.4: Bizim Model Konfigürasyonu
+
+#### Slide İçeriği:
+
+- Başlık: "Retinal Disease Classifier: Model Özeti"
+- Model akış diyagramı (Input → ConvNeXt → Classifier → Sigmoid → 43 Output)
+- Parametre özet tablosu
+
+#### Görseller:
+
+- End-to-end model pipeline görseli
+- Multi-label output açıklama görseli (43 bağımsız sigmoid)
+
+#### Tablo (Slide'a eklenecek):
+
+| Parametre            | Değer               |
+| -------------------- | ------------------- |
+| Backbone             | ConvNeXt-Tiny       |
+| Pretrained Weights   | ImageNet-1K         |
+| Input Size           | 224 × 224 × 3       |
+| Feature Dimension    | 768                 |
+| Output Classes       | 43                  |
+| Total Parameters     | ~28.6 milyon        |
+| Trainable Parameters | ~28.6 milyon        |
+| Output Activation    | Sigmoid (per-class) |
+
+#### Anlatım Metni:
+
+> "Şimdi bizim model konfigürasyonumuzu özetleyelim.
+>
+> **Giriş**: 224×224 piksel boyutunda RGB fundus görüntüsü
+>
+> **Feature Extraction**: ConvNeXt-Tiny backbone, ImageNet pretrained ağırlıklarla başlatılır. 4 stage boyunca görüntüyü işler ve 7×7×768 boyutunda özellik haritası çıkarır.
+>
+> **Global Average Pooling**: Özellik haritasını 768 boyutlu vektöre dönüştürür.
+>
+> **Classifier**: 768→43 boyutlu fully connected layer. Orijinal 1000 sınıflı ImageNet classifier'ı bizim 43 hastalık sınıfımız için değiştirilmiştir.
+>
+> **Multi-label Output**: Her bir sınıf için bağımsız sigmoid aktivasyonu uygulanır. Bu sayede bir görüntüde birden fazla hastalık aynı anda tespit edilebilir. Örneğin, bir hasta hem diyabetik retinopati hem de makula dejenerasyonuna sahip olabilir.
+>
+> Threshold değeri 0.5'tir - sigmoid çıktısı 0.5'in üzerindeyse o hastalık 'var' olarak kabul edilir."
+
+---
+
+### 🖼️ Model Mimarisi Bölümü için Hazırlanabilecek Görseller Özeti:
+
+| Görsel No | Açıklama                                  | Nereden Bulunabilir/Nasıl Hazırlanır |
+| --------- | ----------------------------------------- | ------------------------------------ |
+| 1         | CNN gelişim tarihi (AlexNet→ConvNeXt)     | İnternetten timeline görseli         |
+| 2         | ConvNeXt Block Diyagramı                  | Orijinal paper'dan (Figure 2)        |
+| 3         | ConvNeXt vs ResNet vs ViT karşılaştırması | Paper'dan accuracy tablosu           |
+| 4         | Transfer Learning Konsept                 | Genel infografik                     |
+| 5         | Feature Extractor + Classifier ayrımı     | Özel çizim                           |
+| 6         | Discriminative LR görseli                 | LR değerlerini gösteren bar chart    |
+| 7         | End-to-end pipeline                       | Input→Model→Output akış şeması       |
+| 8         | Multi-label output açıklama               | 43 sigmoid çıkışı gösteren diyagram  |
+
+---
+
+### 📚 Model Mimarisi - Kaynak Referanslar:
+
+1. **ConvNeXt Paper**: Liu et al., "A ConvNet for the 2020s", CVPR 2022
+   - https://arxiv.org/abs/2201.03545
+2. **ImageNet**: Deng et al., "ImageNet: A Large-Scale Hierarchical Image Database", CVPR 2009
+3. **Transfer Learning Survey**: Zhuang et al., "A Comprehensive Survey on Transfer Learning", 2020
 
 ---
 
