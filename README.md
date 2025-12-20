@@ -2,7 +2,7 @@
 
 A deep learning project for **multi-label classification of retinal diseases** from fundus images using **ConvNeXt-Tiny** architecture with transfer learning.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Retinal Disease Classifier/
@@ -75,7 +75,7 @@ The model is trained to detect 43 retinal conditions including:
 - **Test**: 640 images
 - **Image Size**: 224x224 (resized)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -111,7 +111,7 @@ python inference.py --image ./test_image.png --model ./outputs/checkpoints/best_
 python inference.py --folder ./test_images/ --output predictions.csv
 ```
 
-## 📊 Usage Examples
+## Usage Examples
 
 ### Using the Modular Code
 
